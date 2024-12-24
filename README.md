@@ -1,3 +1,7 @@
+# Fork notice:
+This forked repo is a heavily modified and refactored for using imgui and implot in unity5.x/.net framework 3.5.
+I forked and used it for writing a game mod.
+
 # UnityImGui
 
 [Dear ImGui](https://github.com/ocornut/imgui) within Unity thanks to [ImGui.NET](https://github.com/mellinoe/ImGui.NET) and the [Unity Low-level native plug-in interface](https://docs.unity3d.com/Manual/NativePluginInterface.html). 
