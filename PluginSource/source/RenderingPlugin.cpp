@@ -138,13 +138,3 @@ extern "C" ImTextureID UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API GenerateImGuiF
 {
 	return s_CurrentAPI->CreateImGuiFontsTexture(pixels, width, height, bytesPerPixel);
 }
-
-extern "C" UNITY_INTERFACE_EXPORT ImGuiContext* UNITY_INTERFACE_API GetImGuiCurrentContext()
-{
-	return igGetCurrentContext();
-}
-
-extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API SetImGuiCurrentContext(ImGuiContext* ctx)
-{
-	return igSetCurrentContext(ctx);
-}

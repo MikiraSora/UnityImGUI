@@ -1,6 +1,7 @@
 ﻿using System;
 using DpPatches.JudgementDisplayer;
 using ImGuiNET;
+using ImPlotNET;
 using UnityEngine;
 
 public class ImGuiController
@@ -10,7 +11,9 @@ public class ImGuiController
 
     public ImGuiController()
     {
-        ImGui.CreateContext();
+        var imguiCtx = ImGui.CreateContext();
+        ImPlot.CreateContext();
+        ImPlot.SetImGuiContext(imguiCtx);
 
         ImGui.GetIO().Fonts.AddFontDefault();
         RecreateFontDeviceTexture(true);
