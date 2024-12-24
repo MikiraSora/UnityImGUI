@@ -19,31 +19,13 @@ static void UNITY_INTERFACE_API OnGraphicsDeviceEvent(UnityGfxDeviceEventType ev
 static IUnityInterfaces* s_UnityInterfaces = NULL;
 static IUnityGraphics* s_Graphics = NULL;
 
-static ImDrawData* s_drawData = NULL;
-
-void CleanupDrawLists(ImDrawData* drawData)
-{
-	// D11.JN: CmdLists are normally managed internally by imgui, but we're cloning them so we need to take responsibility for cleanup
-	if (drawData->CmdLists)
-	{
-		for (int i = 0; i < drawData->CmdListsCount; ++i)
-		{
-			ImDrawList_ClearFreeMemory(drawData->CmdLists[i]);
-			igMemFree(drawData->CmdLists[i]);
-		}
-		delete[] drawData->CmdLists;
-	}
-}
-
-
 extern "C" void	UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginLoad(IUnityInterfaces* unityInterfaces)
 {
 	s_UnityInterfaces = unityInterfaces;
 	s_Graphics = s_UnityInterfaces->Get<IUnityGraphics>();
 	s_Graphics->RegisterDeviceEventCallback(OnGraphicsDeviceEvent);
 
-	s_drawData = new ImDrawData();
-	
+
 #if SUPPORT_VULKAN
 	if (s_Graphics->GetRenderer() == kUnityGfxRendererNull)
 	{
@@ -58,15 +40,12 @@ extern "C" void	UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginLoad(IUnit
 
 extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginUnload()
 {
-	CleanupDrawLists(s_drawData);
-	ImDrawData_destroy(s_drawData);
-
 	s_Graphics->UnregisterDeviceEventCallback(OnGraphicsDeviceEvent);
 }
 
 #if UNITY_WEBGL
-typedef void	(UNITY_INTERFACE_API * PluginLoadFunc)(IUnityInterfaces* unityInterfaces);
-typedef void	(UNITY_INTERFACE_API * PluginUnloadFunc)();
+typedef void	(UNITY_INTERFACE_API* PluginLoadFunc)(IUnityInterfaces* unityInterfaces);
+typedef void	(UNITY_INTERFACE_API* PluginUnloadFunc)();
 
 extern "C" void	UnityRegisterRenderingPlugin(PluginLoadFunc loadPlugin, PluginUnloadFunc unloadPlugin);
 
@@ -109,8 +88,6 @@ static void UNITY_INTERFACE_API OnGraphicsDeviceEvent(UnityGfxDeviceEventType ev
 	}
 }
 
-
-
 // --------------------------------------------------------------------------
 // OnRenderEvent
 // This will be called for GL.IssuePluginEvent script calls; eventID will
@@ -122,9 +99,9 @@ static void UNITY_INTERFACE_API OnRenderEvent(int eventID)
 	if (s_CurrentAPI == NULL)
 		return;
 
-	if (s_drawData)
-	{
-		s_CurrentAPI->ProcessImGuiCommandList(s_drawData);
+	auto list = igGetDrawData();
+	if (list) {
+		s_CurrentAPI->ProcessImGuiCommandList(list);
 	}
 }
 
@@ -137,48 +114,23 @@ extern "C" UnityRenderingEvent UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API GetRen
 	return OnRenderEvent;
 }
 
-
 //
 typedef void(__stdcall* DebugCallback) (const char* str);
 DebugCallback gDebugCallback;
 
 extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API RegisterDebugCallback(DebugCallback callback)
 {
-    if (callback)
-    {
-        gDebugCallback = callback;
-    }
+	if (callback)
+	{
+		gDebugCallback = callback;
+	}
 }
 
 static void DebugInUnity(std::string message)
 {
-    if (gDebugCallback)
-    {
-        gDebugCallback(message.c_str());
-    }
-}
-
-extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API SendImGuiDrawCommands(ImDrawData* inData)
-{
-	CleanupDrawLists(s_drawData);
-	ImDrawData_Clear(s_drawData);
-
-	if (inData)
+	if (gDebugCallback)
 	{
-		s_drawData->Valid = inData->Valid;
-		s_drawData->CmdListsCount = inData->CmdListsCount;
-		s_drawData->TotalIdxCount = inData->TotalIdxCount;
-		s_drawData->TotalVtxCount = inData->TotalVtxCount;
-		s_drawData->DisplayPos = inData->DisplayPos;
-		s_drawData->DisplaySize = inData->DisplaySize;
-		s_drawData->FramebufferScale = inData->FramebufferScale;
-
-		s_drawData->CmdLists = inData->CmdListsCount ? new ImDrawList*[inData->CmdListsCount] : NULL;
-	
-		for (int i = 0; i < inData->CmdListsCount; ++i)
-		{
-			s_drawData->CmdLists[i] = ImDrawList_CloneOutput(inData->CmdLists[i]);
-		}
+		gDebugCallback(message.c_str());
 	}
 }
 
@@ -187,3 +139,12 @@ extern "C" ImTextureID UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API GenerateImGuiF
 	return s_CurrentAPI->CreateImGuiFontsTexture(pixels, width, height, bytesPerPixel);
 }
 
+extern "C" UNITY_INTERFACE_EXPORT ImGuiContext* UNITY_INTERFACE_API GetImGuiCurrentContext()
+{
+	return igGetCurrentContext();
+}
+
+extern "C" void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API SetImGuiCurrentContext(ImGuiContext* ctx)
+{
+	return igSetCurrentContext(ctx);
+}

@@ -845,7 +845,7 @@ void RenderAPI_D3D12::ProcessImGuiCommandList(ImDrawData* drawData)
     ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource;
     for (int n = 0; n < drawData->CmdListsCount; n++)
     {
-        const ImDrawList* cmd_list = drawData->CmdLists[n];
+        ImDrawList* cmd_list = drawData->CmdLists.Data[n];
         memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
         memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
         vtx_dst += cmd_list->VtxBuffer.Size;
@@ -865,7 +865,7 @@ void RenderAPI_D3D12::ProcessImGuiCommandList(ImDrawData* drawData)
 
     for (int n = 0; n < drawData->CmdListsCount; n++)
     {
-        const ImDrawList* cmd_list = drawData->CmdLists[n];
+        ImDrawList* cmd_list = drawData->CmdLists.Data[n];
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
         {
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer.Data[cmd_i];
